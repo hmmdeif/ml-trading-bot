@@ -6,33 +6,14 @@ config.test = true
 
 const assert = require('assert')
 const db = require('../src/stores/pg')
+const createTradesTable = require('../src/gather/createTradesTable')
 const format = require('pg-format')
 
 const createTimeseries = require('../create_timeseries')
 
 describe('Create time series', () => {
   before(async () => {
-    await db.run(`
-      CREATE SEQUENCE trades_id_seq
-        INCREMENT 1
-        START 1
-        MINVALUE 1
-        MAXVALUE 9223372036854775807
-        CACHE 1;
-        
-      CREATE TABLE trades
-      (
-          id bigint NOT NULL DEFAULT nextval('trades_id_seq'::regclass),
-          quantity numeric,
-          price numeric,
-          type smallint,
-          "timestamp" timestamp with time zone,
-          CONSTRAINT trades_pkey PRIMARY KEY (id)
-      );
-
-      CREATE INDEX "timestamp"
-          ON trades USING btree
-          ("timestamp")`)
+    await createTradesTable()
   })
 
   after(async () => {

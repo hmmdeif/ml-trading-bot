@@ -29,7 +29,7 @@ npm run gather
 
 ## Convert live trade data into candle data
 
-Default candle size is 3 minutes. Can be changed in `create_timeseries.js`.
+Default candle size is 3 minutes. Can be changed in `create_timeseries.js`. It's built to be rerunnable as it will clear existing data before creating the candle data.
 
 ```bash
 npm run create-data

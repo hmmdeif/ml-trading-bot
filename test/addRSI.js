@@ -10,8 +10,9 @@ const createTradesTable = require('../src/gather/createTradesTable')
 const format = require('pg-format')
 
 const createTimeseries = require('../create_timeseries')
+const addRSI = require('../src/timeseries/addRSI')
 
-describe('Create time series', () => {
+describe('Add rsi', () => {
   before(async () => {
     await createTradesTable()
   })
@@ -22,7 +23,6 @@ describe('Create time series', () => {
       DROP TABLE trades;
       DROP SEQUENCE trades_id_seq;
       `)
-    await db.end()
   })
 
   beforeEach(async () => {
@@ -37,6 +37,7 @@ describe('Create time series', () => {
       [2.1, 8000, 0, thirdDate], [1, 8500, 0, thirdDate]]
 
     await db.run(format('INSERT INTO trades (quantity, price, type, timestamp) VALUES %L', values))
+    await createTimeseries(3)
   })
 
   afterEach(async () => {
@@ -44,21 +45,27 @@ describe('Create time series', () => {
     await db.run('DELETE FROM timeseries3')
   })
 
-  it('should insert the correct data for the trades', async () => {
-    await createTimeseries(3)
+  it('should update the newest candles with values', async () => {
+    await addRSI(3, 2)
     const candles = await db.find('SELECT * FROM timeseries3')
 
     assert.equal(candles.length, 5)
-    assert.equal(candles[0].open, '8000')
-    assert.equal(candles[0].volume, '5')
-    assert.equal(candles[0].close, '7500')
-    assert.equal(candles[0].high, '8500')
-    assert.equal(candles[0].low, '7500')
+    assert.equal(candles[0].rsi, null) // first 2 periods ignored
+    assert.equal(candles[1].rsi, null)
+    assert.equal(candles[2].rsi, '12.871287128712872') // low strength as empty candles
+    assert.equal(candles[3].rsi, '12.871287128712872')
+    assert.equal(candles[4].rsi, '80.04535147392289') // high strength because closed up from zero
+  })
 
-    assert.equal(candles[4].open, '8000')
-    assert.equal(candles[4].volume, '3.1')
-    assert.equal(candles[4].close, '8500')
-    assert.equal(candles[4].high, '8500')
-    assert.equal(candles[4].low, '8000')
+  it('should update the candles correctly with different periods', async () => {
+    await addRSI(3, 3)
+    const candles = await db.find('SELECT * FROM timeseries3')
+
+    assert.equal(candles.length, 5)
+    assert.equal(candles[0].rsi, null) // first 3 periods ignored
+    assert.equal(candles[1].rsi, null)
+    assert.equal(candles[2].rsi, null)
+    assert.equal(candles[3].rsi, '12.871287128712869')
+    assert.equal(candles[4].rsi, '61.48796498905909') // high strength because closed up from zero
   })
 })

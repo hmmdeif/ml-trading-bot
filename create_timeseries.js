@@ -4,6 +4,7 @@ const chalk = require('chalk')
 const createTable = require('./src/timeseries/createTable')
 const insertCandle = require('./src/timeseries/insertCandle')
 const config = require('./config')
+const addRSI = require('./src/timeseries/addRSI')
 
 const findFirstCandle = (candleSize, timestamp) => {
   let start = new Date(timestamp.valueOf())
@@ -25,8 +26,7 @@ const resetCandle = (start) => {
   return { open: 0, close: 0, volume: 0, high: 0, low: 0, start: new Date(start.valueOf()) }
 }
 
-const main = async () => {
-  const candleSize = 3 // in minutes
+const main = async (candleSize) => {
   const limit = 1000
   const unixStart = new Date(0)
   let results = []
@@ -97,7 +97,9 @@ const main = async () => {
 }
 
 if (!config.test) {
-  main().then(() => {
+  const candleSize = 3
+  main(candleSize).then(async () => {
+    await addRSI(candleSize, 13)
     process.exit()
   }).catch(e => {
     console.log(chalk.red('Err: Fell out of main loop'))

@@ -5,6 +5,7 @@ const createTable = require('./src/timeseries/createTable')
 const insertCandle = require('./src/timeseries/insertCandle')
 const config = require('./config')
 const addRSI = require('./src/timeseries/addRSI')
+const addBB = require('./src/timeseries/addBB')
 
 const findFirstCandle = (candleSize, timestamp) => {
   let start = new Date(timestamp.valueOf())
@@ -100,6 +101,7 @@ if (!config.test) {
   const candleSize = 3
   main(candleSize).then(async () => {
     await addRSI(candleSize, 13)
+    await addBB(candleSize, 20)
     process.exit()
   }).catch(e => {
     console.log(chalk.red('Err: Fell out of main loop'))
